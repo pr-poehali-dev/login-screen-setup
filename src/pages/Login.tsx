@@ -180,7 +180,7 @@ export default function Login() {
                     : 'border-muted'
                 }`}
               >
-                <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground rounded-sm">
                   {index + 1}
                 </div>
               </button>
