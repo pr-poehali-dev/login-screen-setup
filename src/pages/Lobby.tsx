@@ -162,7 +162,7 @@ export default function Lobby() {
     setJoiningRoomId(roomId);
 
     try {
-      const response = await fetch(`${ROOMS_API}/${roomId}/join`, {
+      const response = await fetch(`${ROOMS_API}?action=join&room_id=${roomId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

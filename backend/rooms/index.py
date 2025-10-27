@@ -9,9 +9,9 @@ from psycopg2.extras import RealDictCursor
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
-    path_params = event.get('pathParams', {})
-    room_id = path_params.get('room_id', '')
-    action = path_params.get('action', '')
+    query_params = event.get('queryStringParameters', {}) or {}
+    room_id = query_params.get('room_id', '')
+    action = query_params.get('action', '')
     
     if method == 'OPTIONS':
         return {
