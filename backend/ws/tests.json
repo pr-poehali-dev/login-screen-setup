@@ -1,0 +1,23 @@
+{
+  "tests": [
+    {
+      "name": "Broadcast room_created event",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "type": "room_created",
+        "room": {
+          "room_id": "test-room",
+          "name": "Test Room",
+          "capacity": 5,
+          "current": 0
+        }
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "status": "broadcast"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

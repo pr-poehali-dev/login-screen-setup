@@ -1,0 +1,57 @@
+{
+  "tests": [
+    {
+      "name": "Get rooms list (empty)",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": [],
+      "bodyMatcher": "exact"
+    },
+    {
+      "name": "Create room with valid data",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Test Room",
+        "capacity": 5
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "room_id": "string",
+        "name": "Test Room",
+        "capacity": 5,
+        "current": 0
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Create room with invalid name (too long)",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "This is a very long room name that exceeds the limit",
+        "capacity": 5
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Create room with invalid capacity",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Test",
+        "capacity": 25
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
