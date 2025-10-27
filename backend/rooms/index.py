@@ -43,7 +43,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cursor = conn.cursor()
     
     protected_actions = ['members', 'messages', 'send', 'leave']
-    if (room_id and action in protected_actions) or (method == 'POST' and action):
+    needs_auth = (action in protected_actions) or (method == 'POST' and action in ['send', 'leave'])
+    
+    if needs_auth:
         if not token or len(token) < 10:
             cursor.close()
             conn.close()
