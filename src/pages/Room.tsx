@@ -13,11 +13,6 @@ interface User {
   color: string;
 }
 
-interface TypingUser {
-  user_id: string;
-  nick: string;
-}
-
 interface Message {
   id: number;
   room_id: string;
@@ -34,10 +29,9 @@ interface RoomInfo {
 }
 
 const ROOMS_API = 'https://functions.poehali.dev/2a2cf5ab-d01d-4975-88a1-cbb437d859dd';
-const WS_API = 'https://functions.poehali.dev/2536b900-bcea-4f56-a373-de560254c885';
-const WS_REALTIME_API = 'https://functions.poehali.dev/e67c0253-fceb-4f22-8395-9359bcf44c89';
+const WS_MESSAGES_API = 'https://functions.poehali.dev/7656a328-0a04-4d38-bbeb-761617c1247e';
 const POLL_INTERVAL = 3000;
-const WS_POLL_INTERVAL = 2000;
+const WS_POLL_INTERVAL = 1000;
 
 export default function Room() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -49,15 +43,12 @@ export default function Room() {
   const [messageText, setMessageText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const pollMembersRef = useRef<NodeJS.Timeout | null>(null);
   const pollMessagesRef = useRef<NodeJS.Timeout | null>(null);
   const pollWsRef = useRef<NodeJS.Timeout | null>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastTypingTimeRef = useRef<number>(0);
   const lastWsTimestampRef = useRef<number>(0);
   const currentUserId = localStorage.getItem('user_id');
 
@@ -127,10 +118,12 @@ export default function Room() {
 
   const pollNewMessages = async () => {
     if (!roomId) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
     try {
       const response = await fetch(
-        `${WS_REALTIME_API}?room_id=${roomId}&since=${lastWsTimestampRef.current}`
+        `${WS_MESSAGES_API}?token=${token}&room_id=${roomId}&since=${lastWsTimestampRef.current}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -161,34 +154,10 @@ export default function Room() {
     }
   };
 
-  const sendTypingIndicator = async () => {
-    const now = Date.now();
-    if (now - lastTypingTimeRef.current < 1000) return;
-    lastTypingTimeRef.current = now;
 
-    try {
-      await fetch(WS_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'typing',
-          room_id: roomId,
-          user_id: localStorage.getItem('user_id'),
-          nick: localStorage.getItem('nick'),
-        }),
-      });
-    } catch (error) {
-      console.error('Typing indicator error:', error);
-    }
-  };
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const text = e.target.value;
-    setMessageText(text);
-
-    if (text.length > 9 && !text.startsWith('/')) {
-      sendTypingIndicator();
-    }
+    setMessageText(e.target.value);
   };
 
   const sendMessage = async () => {
@@ -225,16 +194,6 @@ export default function Room() {
           if (exists) return prev;
           const updated = [...prev, newMessage];
           return updated.slice(-30);
-        });
-
-        await fetch(WS_REALTIME_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'message_new',
-            room_id: roomId,
-            message: newMessage,
-          }),
         });
 
         setMessageText('');
@@ -322,26 +281,7 @@ export default function Room() {
     }
   }, [messages, isAtBottom]);
 
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(WS_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'get_typing', room_id: roomId }),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const typing = data.typing_users || [];
-          setTypingUsers(typing.filter((u: TypingUser) => u.user_id !== currentUserId));
-        }
-      } catch (error) {
-        console.error('Fetch typing users error:', error);
-      }
-    }, 1000);
 
-    return () => clearInterval(interval);
-  }, [roomId, currentUserId]);
 
   if (!room) {
     return (
@@ -389,19 +329,7 @@ export default function Room() {
         </div>
       </div>
 
-      {typingUsers.length > 0 && (
-        <div className="border-b border-border p-2 bg-card">
-          <div className="max-w-4xl mx-auto">
-            <p className="text-sm text-muted-foreground italic">
-              {typingUsers.length === 1
-                ? `${typingUsers[0].nick} печатает...`
-                : typingUsers.length === 2
-                ? `${typingUsers[0].nick} и ${typingUsers[1].nick} печатают...`
-                : `${typingUsers[0].nick}, ${typingUsers[1].nick} и ${typingUsers[2].nick} печатают...`}
-            </p>
-          </div>
-        </div>
-      )}
+
 
       <div
         ref={messagesContainerRef}

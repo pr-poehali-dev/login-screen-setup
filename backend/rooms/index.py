@@ -3,6 +3,7 @@ import os
 import time
 import random
 import string
+import urllib.request
 from typing import Dict, Any
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -369,6 +370,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         cursor.close()
         conn.close()
+        
+        # Broadcast to WebSocket server
+        ws_url = 'https://functions.poehali.dev/7656a328-0a04-4d38-bbeb-761617c1247e'
+        try:
+            broadcast_data = json.dumps({'room_id': room_id, 'message': message}).encode('utf-8')
+            req = urllib.request.Request(ws_url, data=broadcast_data, headers={'Content-Type': 'application/json'}, method='POST')
+            urllib.request.urlopen(req, timeout=1)
+        except Exception:
+            pass  # Ignore broadcast errors
         
         return {
             'statusCode': 200,

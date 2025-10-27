@@ -1,0 +1,41 @@
+{
+  "tests": [
+    {
+      "name": "Poll without token",
+      "method": "GET",
+      "path": "/?room_id=test_room",
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "Token required"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Poll with valid token",
+      "method": "GET",
+      "path": "/?token=test_token_12345&room_id=test_room&since=0",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "messages": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Broadcast message",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "room_id": "test_room",
+        "message": {
+          "id": "msg1",
+          "text": "Hello"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "status": "broadcasted"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
