@@ -35,7 +35,9 @@ interface RoomInfo {
 
 const ROOMS_API = 'https://functions.poehali.dev/2a2cf5ab-d01d-4975-88a1-cbb437d859dd';
 const WS_API = 'https://functions.poehali.dev/2536b900-bcea-4f56-a373-de560254c885';
+const WS_REALTIME_API = 'https://functions.poehali.dev/e67c0253-fceb-4f22-8395-9359bcf44c89';
 const POLL_INTERVAL = 3000;
+const WS_POLL_INTERVAL = 2000;
 
 export default function Room() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -53,8 +55,10 @@ export default function Room() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const pollMembersRef = useRef<NodeJS.Timeout | null>(null);
   const pollMessagesRef = useRef<NodeJS.Timeout | null>(null);
+  const pollWsRef = useRef<NodeJS.Timeout | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTypingTimeRef = useRef<number>(0);
+  const lastWsTimestampRef = useRef<number>(0);
   const currentUserId = localStorage.getItem('user_id');
 
   const scrollToBottom = () => {
@@ -128,6 +132,42 @@ export default function Room() {
     }
   };
 
+  const pollNewMessages = async () => {
+    if (!roomId) return;
+
+    try {
+      const response = await fetch(
+        `${WS_REALTIME_API}?room_id=${roomId}&since=${lastWsTimestampRef.current}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.timestamp) {
+          lastWsTimestampRef.current = data.timestamp;
+        }
+
+        if (data.messages && data.messages.length > 0) {
+          data.messages.forEach((event: any) => {
+            if (event.type === 'message_new' && event.message) {
+              const newMessage: Message = event.message;
+              
+              setMessages(prev => {
+                const exists = prev.some(m => m.id === newMessage.id);
+                if (exists) return prev;
+                const updated = [...prev, newMessage];
+                return updated.slice(-30);
+              });
+
+              setTimeout(scrollToBottom, 100);
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Poll new messages error:', error);
+    }
+  };
+
   const sendTypingIndicator = async () => {
     const now = Date.now();
     if (now - lastTypingTimeRef.current < 1000) return;
@@ -194,7 +234,7 @@ export default function Room() {
           return updated.slice(-30);
         });
 
-        await fetch(WS_API, {
+        await fetch(WS_REALTIME_API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -268,12 +308,16 @@ export default function Room() {
     fetchMembers();
     fetchMessages();
 
+    lastWsTimestampRef.current = Date.now() / 1000;
+
     pollMembersRef.current = setInterval(fetchMembers, POLL_INTERVAL);
     pollMessagesRef.current = setInterval(fetchMessages, POLL_INTERVAL);
+    pollWsRef.current = setInterval(pollNewMessages, WS_POLL_INTERVAL);
 
     return () => {
       if (pollMembersRef.current) clearInterval(pollMembersRef.current);
       if (pollMessagesRef.current) clearInterval(pollMessagesRef.current);
+      if (pollWsRef.current) clearInterval(pollWsRef.current);
     };
   }, [roomId, navigate]);
 

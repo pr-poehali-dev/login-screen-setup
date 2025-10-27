@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "POST broadcast message_new",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "type": "message_new",
+        "room_id": "test-room",
+        "message": {
+          "id": 1,
+          "text": "Hello"
+        }
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "status": "broadcast"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET poll messages for empty room",
+      "method": "GET",
+      "path": "/?room_id=empty-room&since=0",
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    }
+  ]
+}
