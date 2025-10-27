@@ -6,9 +6,9 @@ import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 
 const AVATAR_PRESETS = [
-  'https://cdn.poehali.dev/projects/f289f395-a430-49c8-bd8e-2e1ca704f434/files/685e8412-cf28-4179-85e0-765a632b77e9.jpg',
-  'https://cdn.poehali.dev/projects/f289f395-a430-49c8-bd8e-2e1ca704f434/files/3fa74cbc-73b6-4ee9-9e14-643b1215bcc0.jpg',
-  'https://cdn.poehali.dev/projects/f289f395-a430-49c8-bd8e-2e1ca704f434/files/7537029a-749b-4531-b8d2-40c12f0a4496.jpg',
+  'https://cdn.poehali.dev/4x/placeholder.svg',
+  'https://cdn.poehali.dev/4x/placeholder.svg',
+  'https://cdn.poehali.dev/4x/placeholder.svg',
   'https://cdn.poehali.dev/4x/placeholder.svg',
   'https://cdn.poehali.dev/4x/placeholder.svg',
   'https://cdn.poehali.dev/4x/placeholder.svg',
@@ -155,8 +155,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 flex justify-center">
+      <div className="w-full max-w-md space-y-8">
+        <div className="flex justify-center">
           <img
             src="https://cdn.poehali.dev/files/3a2278aa-53d7-496f-a77d-66a5c62bb3e0.png"
             alt="Urban Grove"
@@ -165,77 +165,70 @@ export default function Login() {
           />
         </div>
 
-        <div className="bg-[#C0C0C0] border-4 border-[#DFDFDF] border-t-[#FFFFFF] border-l-[#FFFFFF] border-r-[#404040] border-b-[#404040] p-6">
-          <div className="mb-6">
-            <div className="grid grid-cols-7 gap-2 mb-4">
-              {AVATAR_PRESETS.map((preset, index) => (
-                <button
-                  key={index}
-                  onClick={() => handlePresetClick(index)}
-                  className={`w-12 h-12 rounded-full border-2 overflow-hidden transition-all ${
-                    selectedPreset === index && !customAvatar
-                      ? 'border-[#00FFFF] shadow-[0_0_8px_#00FFFF]'
-                      : 'border-[#808080]'
-                  }`}
-                >
-                  <img
-                    src={preset}
-                    alt={`Avatar ${index + 1}`}
-                    className="w-full h-full object-cover"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
-                </button>
-              ))}
-            </div>
-
-            {customAvatar && (
-              <div className="mb-4 flex justify-center">
-                <div className="w-24 h-24 rounded-full border-4 border-[#00FFFF] overflow-hidden shadow-[0_0_12px_#00FFFF]">
-                  <img
-                    src={customAvatar}
-                    alt="Custom Avatar"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            )}
-
-            <label className="block mb-4">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full bg-[#C0C0C0] border-2 border-[#FFFFFF] border-t-[#FFFFFF] border-l-[#FFFFFF] border-r-[#404040] border-b-[#404040] text-black hover:bg-[#DFDFDF] font-bold"
-                onClick={() => document.getElementById('avatar-upload')?.click()}
+        <div className="bg-card border border-border rounded-lg p-6 space-y-6">
+          <div className="grid grid-cols-7 gap-2">
+            {AVATAR_PRESETS.map((preset, index) => (
+              <button
+                key={index}
+                onClick={() => handlePresetClick(index)}
+                className={`w-12 h-12 rounded-full border-2 overflow-hidden transition-all ${
+                  selectedPreset === index && !customAvatar
+                    ? 'border-primary shadow-[0_0_8px_hsl(var(--primary))]'
+                    : 'border-muted'
+                }`}
               >
-                <Icon name="Upload" className="mr-2" size={16} />
-                Загрузить аватар
-              </Button>
-              <input
-                id="avatar-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileUpload}
-              />
-            </label>
+                <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                  {index + 1}
+                </div>
+              </button>
+            ))}
           </div>
 
-          <div className="mb-4">
+          {customAvatar && (
+            <div className="flex justify-center">
+              <div className="w-24 h-24 rounded-full border-4 border-primary overflow-hidden shadow-[0_0_12px_hsl(var(--primary))]">
+                <img
+                  src={customAvatar}
+                  alt="Custom Avatar"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          )}
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => document.getElementById('avatar-upload')?.click()}
+          >
+            <Icon name="Upload" className="mr-2" size={16} />
+            Загрузить аватар
+          </Button>
+          <input
+            id="avatar-upload"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+
+          <div className="space-y-2">
             <Input
               placeholder="Ваш ник"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               maxLength={20}
-              className="bg-white text-black border-2 border-[#808080] border-t-[#000000] border-l-[#000000] border-r-[#DFDFDF] border-b-[#DFDFDF] font-bold"
+              className="text-black"
               style={{ backgroundColor: selectedColor }}
             />
-            <div className="text-xs text-black mt-1">{nickname.length}/20</div>
+            <div className="text-xs text-muted-foreground">{nickname.length}/20</div>
           </div>
 
           <Button
             type="button"
             variant="outline"
-            className="w-full mb-4 bg-[#C0C0C0] border-2 border-[#FFFFFF] border-t-[#FFFFFF] border-l-[#FFFFFF] border-r-[#404040] border-b-[#404040] text-black hover:bg-[#DFDFDF] font-bold"
+            className="w-full"
             onClick={() => setIsColorPickerOpen(true)}
           >
             <Icon name="Palette" className="mr-2" size={16} />
@@ -245,7 +238,7 @@ export default function Login() {
           <Button
             onClick={handleLogin}
             disabled={!nickname || nickname.length < 1 || nickname.length > 20 || isLoading}
-            className="w-full bg-[#00FFFF] border-2 border-[#FFFFFF] border-t-[#FFFFFF] border-l-[#FFFFFF] border-r-[#008B8B] border-b-[#008B8B] text-black hover:bg-[#00CCCC] disabled:bg-[#808080] disabled:text-[#404040] font-bold text-lg"
+            className="w-full text-lg"
           >
             {isLoading ? 'ВХОД...' : 'ВОЙТИ'}
           </Button>
@@ -253,14 +246,14 @@ export default function Login() {
       </div>
 
       <Dialog open={isColorPickerOpen} onOpenChange={setIsColorPickerOpen}>
-        <DialogContent className="bg-[#C0C0C0] border-4 border-[#DFDFDF] border-t-[#FFFFFF] border-l-[#FFFFFF] border-r-[#404040] border-b-[#404040]">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-black font-bold">Выбор цвета</DialogTitle>
+            <DialogTitle>Выбор цвета</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm text-black font-bold">Оттенок (H)</label>
+              <label className="text-sm">Оттенок (H)</label>
               <input
                 type="range"
                 min="0"
@@ -272,7 +265,7 @@ export default function Login() {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm text-black font-bold">Насыщенность (S)</label>
+              <label className="text-sm">Насыщенность (S)</label>
               <input
                 type="range"
                 min="0"
@@ -284,7 +277,7 @@ export default function Login() {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm text-black font-bold">Яркость (V)</label>
+              <label className="text-sm">Яркость (V)</label>
               <input
                 type="range"
                 min="0"
@@ -296,14 +289,11 @@ export default function Login() {
             </div>
 
             <div
-              className="w-full h-16 border-2 border-black"
+              className="w-full h-16 rounded border-2"
               style={{ backgroundColor: hsvToHex(hue, saturation, value) }}
             />
 
-            <Button
-              onClick={applyColor}
-              className="w-full bg-[#00FFFF] border-2 border-[#FFFFFF] border-t-[#FFFFFF] border-l-[#FFFFFF] border-r-[#008B8B] border-b-[#008B8B] text-black hover:bg-[#00CCCC] font-bold"
-            >
+            <Button onClick={applyColor} className="w-full">
               Применить
             </Button>
           </div>
