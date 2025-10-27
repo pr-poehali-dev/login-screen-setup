@@ -35,6 +35,7 @@ export default function Lobby() {
   const [roomName, setRoomName] = useState('');
   const [roomCapacity, setRoomCapacity] = useState(5);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [joiningRoomId, setJoiningRoomId] = useState<string | null>(null);
   const navigate = useNavigate();
   const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
@@ -150,6 +151,58 @@ export default function Lobby() {
     }
   };
 
+  const joinRoom = async (roomId: string) => {
+    setJoiningRoomId(roomId);
+
+    try {
+      const response = await fetch(`${ROOMS_API}/${roomId}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: localStorage.getItem('user_id'),
+          nick: localStorage.getItem('nick'),
+          avatar_url: localStorage.getItem('avatar_url'),
+          color: localStorage.getItem('color'),
+        }),
+      });
+
+      if (response.ok) {
+        const updatedRoom: Room = await response.json();
+        
+        await fetch(WS_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'member_joined',
+            room_id: roomId,
+            user: {
+              user_id: localStorage.getItem('user_id'),
+              nick: localStorage.getItem('nick'),
+              avatar_url: localStorage.getItem('avatar_url'),
+              color: localStorage.getItem('color'),
+            },
+            current: updatedRoom.current,
+          }),
+        });
+
+        navigate(`/room/${roomId}`);
+      } else {
+        const error = await response.json();
+        if (error.error === 'room_full') {
+          toast.error('Комната заполнена');
+        } else if (error.error === 'already_in_room') {
+          toast.error('Вы уже в этой комнате');
+        } else {
+          toast.error('Ошибка входа');
+        }
+      }
+    } catch (error) {
+      toast.error('Ошибка сети');
+    } finally {
+      setJoiningRoomId(null);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -200,12 +253,20 @@ export default function Lobby() {
               {rooms.map((room) => (
                 <div
                   key={room.room_id}
-                  className="border border-border rounded-lg p-4 hover:bg-accent transition-colors cursor-pointer"
+                  className="border border-border rounded-lg p-4 flex items-center justify-between hover:bg-accent transition-colors"
                 >
-                  <h3 className="font-bold text-lg">{room.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {room.current}/{room.capacity} игроков
-                  </p>
+                  <div>
+                    <h3 className="font-bold text-lg">{room.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {room.current}/{room.capacity} игроков
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => joinRoom(room.room_id)}
+                    disabled={joiningRoomId === room.room_id || room.current >= room.capacity}
+                  >
+                    {joiningRoomId === room.room_id ? 'Вход...' : 'Войти'}
+                  </Button>
                 </div>
               ))}
             </div>

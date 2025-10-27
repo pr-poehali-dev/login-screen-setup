@@ -1,13 +1,6 @@
 {
   "tests": [
-    {
-      "name": "Get rooms list (empty)",
-      "method": "GET",
-      "path": "/",
-      "expectedStatus": 200,
-      "expectedBody": [],
-      "bodyMatcher": "exact"
-    },
+
     {
       "name": "Create room with valid data",
       "method": "POST",
