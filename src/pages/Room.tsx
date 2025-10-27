@@ -76,15 +76,8 @@ export default function Room() {
   };
 
   const fetchRoomInfo = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     try {
-      const response = await fetch(`${ROOMS_API}?room_id=${roomId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetch(`${ROOMS_API}?room_id=${roomId}`);
       if (response.ok) {
         const data: RoomInfo = await response.json();
         setRoom(data);
