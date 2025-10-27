@@ -15,11 +15,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     if method == 'OPTIONS':
         return {
-            'statusCode': 200,
+            'statusCode': 204,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
+                'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
             'body': ''
@@ -29,7 +30,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if not dsn:
         return {
             'statusCode': 500,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
             'body': json.dumps({'error': 'DATABASE_URL not configured'})
         }
     
@@ -45,7 +46,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Credentials': 'true'
+            },
             'body': json.dumps(rooms)
         }
     
@@ -58,13 +63,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if not room:
             return {
                 'statusCode': 404,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Credentials': 'true'
+                },
                 'body': json.dumps({'error': 'Room not found'})
             }
         
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Credentials': 'true'
+            },
             'body': json.dumps(dict(room))
         }
     
@@ -79,7 +92,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Credentials': 'true'
+            },
             'body': json.dumps(members)
         }
     
@@ -119,7 +136,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
             'body': json.dumps(messages)
         }
     
@@ -133,7 +150,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({'error': 'Name must be 1-20 characters'})
             }
         
@@ -142,7 +159,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({'error': 'Capacity must be 2-20'})
             }
         
@@ -165,7 +182,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
             'body': json.dumps(room)
         }
     
@@ -181,7 +198,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({'error': 'Missing user data'})
             }
         
@@ -193,7 +210,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 404,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({'error': 'Room not found'})
             }
         
@@ -203,7 +220,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 409,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({'error': 'already_in_room'})
             }
         
@@ -212,7 +229,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 409,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({'error': 'room_full'})
             }
         
@@ -231,7 +248,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
             'body': json.dumps(updated_room)
         }
     
@@ -244,7 +261,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({'error': 'user_id required'})
             }
         
@@ -254,7 +271,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 404,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({'error': 'Not in room'})
             }
         
@@ -266,7 +283,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
             'body': json.dumps({'ok': True})
         }
     
@@ -283,7 +300,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({'error': 'empty'})
             }
         
@@ -292,7 +309,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({'error': 'too_long'})
             }
         
@@ -301,7 +318,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn.close()
             return {
                 'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
                 'body': json.dumps({'error': 'Missing user data'})
             }
         
@@ -334,7 +351,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
             'body': json.dumps({'message': message})
         }
     
@@ -343,6 +360,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     return {
         'statusCode': 405,
-        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Credentials': 'true'},
         'body': json.dumps({'error': 'Method not allowed'})
     }

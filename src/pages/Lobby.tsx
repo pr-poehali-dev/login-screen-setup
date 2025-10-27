@@ -26,6 +26,7 @@ const ROOMS_API = 'https://functions.poehali.dev/2a2cf5ab-d01d-4975-88a1-cbb437d
 const WS_API = 'https://functions.poehali.dev/2536b900-bcea-4f56-a373-de560254c885';
 const HEARTBEAT_INTERVAL = 10000;
 const POLL_INTERVAL = 5000;
+const TOAST_DEBOUNCE_MS = 5000;
 
 export default function Lobby() {
   const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
@@ -40,6 +41,7 @@ export default function Lobby() {
   const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
   const roomsPollRef = useRef<NodeJS.Timeout | null>(null);
+  const lastToastTimestamp = useRef<Map<string, number>>(new Map());
 
   const sendHeartbeat = async () => {
     const token = localStorage.getItem('token');
@@ -77,12 +79,17 @@ export default function Lobby() {
         const newUsers: User[] = data.users || [];
         
         const newUserIds = new Set(newUsers.map(u => u.user_id));
+        const currentTime = Date.now();
         
         newUsers.forEach(user => {
           if (!previousUserIds.has(user.user_id)) {
             const currentUserId = localStorage.getItem('user_id');
             if (user.user_id !== currentUserId) {
-              toast.success(`${user.nick} зашёл в лобби`);
+              const lastShown = lastToastTimestamp.current.get(user.user_id) || 0;
+              if (currentTime - lastShown > TOAST_DEBOUNCE_MS) {
+                toast.success(`${user.nick} зашёл в лобби`);
+                lastToastTimestamp.current.set(user.user_id, currentTime);
+              }
             }
           }
         });
@@ -210,9 +217,18 @@ export default function Lobby() {
       return;
     }
 
-    sendHeartbeat();
-    fetchOnlineUsers();
-    fetchRooms();
+    let isInitialMount = true;
+    
+    const runInitialFetch = async () => {
+      if (isInitialMount) {
+        await sendHeartbeat();
+        await fetchOnlineUsers();
+        await fetchRooms();
+        isInitialMount = false;
+      }
+    };
+
+    runInitialFetch();
 
     heartbeatRef.current = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
     pollRef.current = setInterval(fetchOnlineUsers, POLL_INTERVAL);
