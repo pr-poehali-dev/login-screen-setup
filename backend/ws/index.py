@@ -1,11 +1,14 @@
 '''
-Business: WebSocket-like broadcast endpoint for room events
+Business: WebSocket-like broadcast endpoint for room events with typing indicators
 Args: POST with {type, ...data} to broadcast events
-Returns: Broadcast confirmation
+Returns: Broadcast confirmation or typing users list
 '''
 
 import json
+import time
 from typing import Dict, Any
+
+typing_state: Dict[str, Dict[str, Any]] = {}
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'POST')
@@ -85,6 +88,53 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'status': 'broadcast',
                     'message': {'type': 'message_new', 'room_id': room_id, 'message': message}
                 })
+            }
+        
+        if event_type == 'typing':
+            room_id = body_data.get('room_id')
+            user_id = body_data.get('user_id')
+            nick = body_data.get('nick')
+            
+            if room_id and user_id and nick:
+                if room_id not in typing_state:
+                    typing_state[room_id] = {}
+                
+                typing_state[room_id][user_id] = {
+                    'nick': nick,
+                    'timestamp': time.time()
+                }
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'status': 'ok'})
+            }
+        
+        if event_type == 'get_typing':
+            room_id = body_data.get('room_id')
+            current_time = time.time()
+            
+            typing_users = []
+            if room_id in typing_state:
+                for user_id, data in list(typing_state[room_id].items()):
+                    if current_time - data['timestamp'] < 2:
+                        typing_users.append({
+                            'user_id': user_id,
+                            'nick': data['nick']
+                        })
+                    else:
+                        del typing_state[room_id][user_id]
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'typing_users': typing_users})
             }
     
     return {

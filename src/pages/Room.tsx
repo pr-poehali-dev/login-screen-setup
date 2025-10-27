@@ -13,6 +13,11 @@ interface User {
   color: string;
 }
 
+interface TypingUser {
+  user_id: string;
+  nick: string;
+}
+
 interface Message {
   id: number;
   room_id: string;
@@ -42,11 +47,14 @@ export default function Room() {
   const [messageText, setMessageText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const pollMembersRef = useRef<NodeJS.Timeout | null>(null);
   const pollMessagesRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTypingTimeRef = useRef<number>(0);
   const currentUserId = localStorage.getItem('user_id');
 
   const scrollToBottom = () => {
@@ -96,6 +104,36 @@ export default function Room() {
       }
     } catch (error) {
       console.error('Fetch messages error:', error);
+    }
+  };
+
+  const sendTypingIndicator = async () => {
+    const now = Date.now();
+    if (now - lastTypingTimeRef.current < 1000) return;
+    lastTypingTimeRef.current = now;
+
+    try {
+      await fetch(WS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'typing',
+          room_id: roomId,
+          user_id: localStorage.getItem('user_id'),
+          nick: localStorage.getItem('nick'),
+        }),
+      });
+    } catch (error) {
+      console.error('Typing indicator error:', error);
+    }
+  };
+
+  const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const text = e.target.value;
+    setMessageText(text);
+
+    if (text.length > 9 && !text.startsWith('/')) {
+      sendTypingIndicator();
     }
   };
 
@@ -207,8 +245,33 @@ export default function Room() {
   }, [roomId, navigate]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (isAtBottom) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [messages, isAtBottom]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(WS_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'get_typing', room_id: roomId }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const typing = data.typing_users || [];
+          setTypingUsers(typing.filter((u: TypingUser) => u.user_id !== currentUserId));
+        }
+      } catch (error) {
+        console.error('Fetch typing users error:', error);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [roomId, currentUserId]);
 
   if (!room) {
     return (
@@ -255,6 +318,20 @@ export default function Room() {
           </div>
         </div>
       </div>
+
+      {typingUsers.length > 0 && (
+        <div className="border-b border-border p-2 bg-card">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-sm text-muted-foreground italic">
+              {typingUsers.length === 1
+                ? `${typingUsers[0].nick} печатает...`
+                : typingUsers.length === 2
+                ? `${typingUsers[0].nick} и ${typingUsers[1].nick} печатают...`
+                : `${typingUsers[0].nick}, ${typingUsers[1].nick} и ${typingUsers[2].nick} печатают...`}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div
         ref={messagesContainerRef}
@@ -305,10 +382,17 @@ export default function Room() {
 
       <div className="border-t border-border p-4 bg-card">
         <div className="max-w-4xl mx-auto flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => toast.info('Прикрепление файлов скоро...')}
+          >
+            <Icon name="Paperclip" size={16} />
+          </Button>
           <Input
             placeholder="Сообщение (до 150 символов)"
             value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
+            onChange={handleMessageChange}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
