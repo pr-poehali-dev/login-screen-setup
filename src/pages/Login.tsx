@@ -128,7 +128,7 @@ export default function Login() {
       : { type: 'preset', value: `preset_${selectedPreset}.png` };
 
     try {
-      const response = await fetch('/auth/guest', {
+      const response = await fetch('https://functions.poehali.dev/480a4621-44de-472e-aa66-27bc954e5603', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -142,6 +142,9 @@ export default function Login() {
         const data = await response.json();
         localStorage.setItem('token', data.token);
         localStorage.setItem('user_id', data.user_id);
+        localStorage.setItem('nick', data.nick);
+        localStorage.setItem('avatar_url', data.avatar_url);
+        localStorage.setItem('color', data.color);
         window.location.href = '/lobby';
       } else {
         toast.error('Ошибка входа');

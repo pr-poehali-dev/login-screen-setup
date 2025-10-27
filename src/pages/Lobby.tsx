@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
@@ -10,10 +10,70 @@ interface User {
   color: string;
 }
 
+const ONLINE_API = 'https://functions.poehali.dev/4d372ca1-0154-4874-adfa-c59c4172bd88';
+const HEARTBEAT_INTERVAL = 10000;
+const POLL_INTERVAL = 5000;
+
 export default function Lobby() {
   const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
-  const [ws, setWs] = useState<WebSocket | null>(null);
+  const [previousUserIds, setPreviousUserIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
+  const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
+  const pollRef = useRef<NodeJS.Timeout | null>(null);
+
+  const sendHeartbeat = async () => {
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('user_id');
+    const nick = localStorage.getItem('nick');
+    const avatarUrl = localStorage.getItem('avatar_url');
+    const color = localStorage.getItem('color');
+
+    if (!token || !userId || !nick || !avatarUrl || !color) return;
+
+    try {
+      await fetch(ONLINE_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Auth-Token': token,
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          nick,
+          avatar_url: avatarUrl,
+          color,
+        }),
+      });
+    } catch (error) {
+      console.error('Heartbeat error:', error);
+    }
+  };
+
+  const fetchOnlineUsers = async () => {
+    try {
+      const response = await fetch(ONLINE_API);
+      if (response.ok) {
+        const data = await response.json();
+        const newUsers: User[] = data.users || [];
+        
+        const newUserIds = new Set(newUsers.map(u => u.user_id));
+        
+        newUsers.forEach(user => {
+          if (!previousUserIds.has(user.user_id)) {
+            const currentUserId = localStorage.getItem('user_id');
+            if (user.user_id !== currentUserId) {
+              toast.success(`${user.nick} зашёл в лобби`);
+            }
+          }
+        });
+
+        setOnlineUsers(newUsers);
+        setPreviousUserIds(newUserIds);
+      }
+    } catch (error) {
+      console.error('Fetch online users error:', error);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -22,48 +82,15 @@ export default function Lobby() {
       return;
     }
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/connect?token=${token}`;
-    const websocket = new WebSocket(wsUrl);
+    sendHeartbeat();
+    fetchOnlineUsers();
 
-    websocket.onopen = () => {
-      websocket.send(JSON.stringify({ type: 'online' }));
-    };
-
-    websocket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-
-        if (data.type === 'online_list') {
-          setOnlineUsers(data.users || []);
-        } else if (data.type === 'user_joined') {
-          setOnlineUsers((prev) => {
-            if (prev.some(u => u.user_id === data.user.user_id)) {
-              return prev;
-            }
-            return [...prev, data.user];
-          });
-          toast.success(`${data.user.nick} зашёл в лобби`);
-        } else if (data.type === 'user_left') {
-          setOnlineUsers((prev) => prev.filter(u => u.user_id !== data.user_id));
-        }
-      } catch (error) {
-        console.error('WebSocket message error:', error);
-      }
-    };
-
-    websocket.onerror = () => {
-      toast.error('Ошибка подключения');
-    };
-
-    websocket.onclose = () => {
-      toast.error('Соединение закрыто');
-    };
-
-    setWs(websocket);
+    heartbeatRef.current = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
+    pollRef.current = setInterval(fetchOnlineUsers, POLL_INTERVAL);
 
     return () => {
-      websocket.close();
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [navigate]);
 

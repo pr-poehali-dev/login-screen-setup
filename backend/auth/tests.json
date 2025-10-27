@@ -1,0 +1,42 @@
+{
+  "tests": [
+    {
+      "name": "Guest authentication with valid nick",
+      "method": "POST",
+      "body": {
+        "nick": "TestUser",
+        "avatar": {
+          "type": "preset",
+          "value": "preset_0.png"
+        },
+        "color": "#00FFFF"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "user_id": "string",
+        "token": "string",
+        "nick": "TestUser",
+        "avatar_url": "string",
+        "color": "#00FFFF"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Reject empty nick",
+      "method": "POST",
+      "body": {
+        "nick": "",
+        "avatar": {
+          "type": "preset",
+          "value": "preset_0.png"
+        },
+        "color": "#00FFFF"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

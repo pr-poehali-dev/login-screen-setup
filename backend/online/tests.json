@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "name": "Get online users list",
+      "method": "GET",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Post heartbeat requires token",
+      "method": "POST",
+      "body": {
+        "user_id": "test-123",
+        "nick": "TestUser",
+        "avatar_url": "https://example.com/avatar.png",
+        "color": "#00FFFF"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
