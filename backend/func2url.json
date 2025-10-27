@@ -1,6 +1,3 @@
 {
-  "ws": "https://functions.poehali.dev/2536b900-bcea-4f56-a373-de560254c885",
-  "rooms": "https://functions.poehali.dev/2a2cf5ab-d01d-4975-88a1-cbb437d859dd",
-  "online": "https://functions.poehali.dev/4d372ca1-0154-4874-adfa-c59c4172bd88",
-  "auth": "https://functions.poehali.dev/480a4621-44de-472e-aa66-27bc954e5603"
+  "rooms": "https://functions.poehali.dev/2a2cf5ab-d01d-4975-88a1-cbb437d859dd"
 }

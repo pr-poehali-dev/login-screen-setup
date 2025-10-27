@@ -13,13 +13,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     room_id = query_params.get('room_id', '')
     action = query_params.get('action', '')
     
+    headers = event.get('headers', {})
+    auth_header = headers.get('authorization', headers.get('Authorization', ''))
+    token = auth_header.replace('Bearer ', '') if auth_header.startswith('Bearer ') else auth_header
+    
     if method == 'OPTIONS':
         return {
             'statusCode': 204,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Token',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Auth-Token',
                 'Access-Control-Allow-Credentials': 'true',
                 'Access-Control-Max-Age': '86400'
             },
@@ -37,6 +41,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = psycopg2.connect(dsn, cursor_factory=RealDictCursor)
     conn.autocommit = True
     cursor = conn.cursor()
+    
+    protected_actions = ['members', 'messages', 'send', 'leave']
+    if (room_id and action in protected_actions) or (method == 'POST' and action):
+        if not token or len(token) < 10:
+            cursor.close()
+            conn.close()
+            return {
+                'statusCode': 401,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Credentials': 'true'
+                },
+                'body': json.dumps({'error': 'Unauthorized - token required'})
+            }
     
     if method == 'GET' and not room_id:
         cursor.execute('SELECT room_id, name, capacity, current_users as current FROM rooms ORDER BY created_at DESC')

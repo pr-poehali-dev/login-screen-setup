@@ -72,8 +72,15 @@ export default function Room() {
   };
 
   const fetchRoomInfo = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
-      const response = await fetch(`${ROOMS_API}/${roomId}`);
+      const response = await fetch(`${ROOMS_API}?room_id=${roomId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (response.ok) {
         const data: RoomInfo = await response.json();
         setRoom(data);
@@ -84,8 +91,15 @@ export default function Room() {
   };
 
   const fetchMembers = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
-      const response = await fetch(`${ROOMS_API}/${roomId}/members`);
+      const response = await fetch(`${ROOMS_API}?action=members&room_id=${roomId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (response.ok) {
         const data: User[] = await response.json();
         setMembers(data);
@@ -96,8 +110,15 @@ export default function Room() {
   };
 
   const fetchMessages = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
-      const response = await fetch(`${ROOMS_API}/${roomId}/messages?limit=30`);
+      const response = await fetch(`${ROOMS_API}?action=messages&room_id=${roomId}&limit=30`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (response.ok) {
         const data: Message[] = await response.json();
         setMessages(data.slice(-30));
@@ -141,12 +162,18 @@ export default function Room() {
     const text = messageText.trim();
     if (!text || text.length > 150 || isSending) return;
 
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     setIsSending(true);
 
     try {
-      const response = await fetch(`${ROOMS_API}/${roomId}/messages`, {
+      const response = await fetch(`${ROOMS_API}?action=send&room_id=${roomId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           text,
           user_id: localStorage.getItem('user_id'),
@@ -193,10 +220,16 @@ export default function Room() {
   };
 
   const leaveRoom = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
-      const response = await fetch(`${ROOMS_API}/${roomId}/leave`, {
+      const response = await fetch(`${ROOMS_API}?action=leave&room_id=${roomId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ user_id: localStorage.getItem('user_id') }),
       });
 
